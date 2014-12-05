@@ -1,0 +1,15 @@
+name: 'LD31'
+version: 0.0.1
+description: >
+  Ludum Dare 31
+#author: <your name> <email@example.com>
+#homepage: https://www.example.com
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  browser: any
+  script_inliner: '>=0.0.3 <0.1.0'
+transformers:
+  - script_inliner
+#  - sass:
+#      style: compressed
