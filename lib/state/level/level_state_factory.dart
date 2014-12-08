@@ -20,39 +20,39 @@ class LevelStateFactory extends StateFactory<Game> {
     
     EntityFactory entityFactory = (int movesTaken, int x, int y) {
       
-      double top = (sqrt(movesTaken + 25.0) + game.depth);
+      double top = (sqrt(movesTaken + 25.0) + game.depth + 1);
       double bottom = sqrt(game.depth + 36.0);
       //print("$top vs $bottom");
       
-      bool enemy = this._random.nextDouble() * top > bottom && this._random.nextInt(game.depth + 3) > 3;
+      bool enemy = this._random.nextDouble() * top > bottom && this._random.nextInt(game.depth + 5) > 4;
       EntityType entityType;
       if( enemy ) {
-        if( this._random.nextInt(game.depth + 1) > 2 && this._random.nextDouble() > 0.5  ) {
+        if( this._random.nextInt(game.depth + 2) > 2 && this._random.nextBool() ) {
           entityType = EntityType.SPIKE_BLOCK;          
         } else {
-          if( this._random.nextBool() && game.depth > 6 ) {
+          if( this._random.nextInt(game.depth) > 3 && this._random.nextBool() ) {
             entityType = EntityType.SPIDER;
           } else {
             entityType = EntityType.SNAKE;            
           }
         }
       } else {
-        int type = this._random.nextInt(13);
+        int type = this._random.nextInt(max( 11, 14 - game.depth~/3));
         entityType = EntityType.DIRT;
         switch( type ) {
           case 1:
-          case 5:
-          case 9:
+          case 2:
+          case 3:
             entityType = EntityType.BLUE_STONE;
             break;
-          case 2:
+          case 4:
+          case 5:
           case 6:
-          case 10:
             entityType = EntityType.GREEN_STONE;
             break;
-          case 3:
           case 7:
-          case 11:
+          case 8:
+          case 9:
             entityType = EntityType.RED_STONE;
             break;
           case 0:

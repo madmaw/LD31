@@ -57,7 +57,6 @@ class LevelState extends State {
         tilesDown - 1
     );
     this.busy = false;
-    this.redraw();
     
     // show the current level
     int level = this._game.depth + 1;
@@ -78,7 +77,14 @@ class LevelState extends State {
         this._stage.children.remove(introText);
       }      
     };
+    // sometimes this doesn't fire?
+    Timer timer = new Timer(new Duration(seconds: 4), () {
+      this._stage.children.remove(introText);      
+    });
+    
     this._tweenManager.add(tween);
+    
+    this.redraw();
   }
   
   void addListeners() {

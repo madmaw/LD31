@@ -5,6 +5,8 @@ library game;
 
 import 'dart:html';
 import 'dart:math';
+import 'dart:async';
+
 
 import 'package:tweenengine/tweenengine.dart' as Tweening;
 import 'package:pixi/pixi.dart' as PIXI;

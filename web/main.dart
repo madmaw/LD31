@@ -28,7 +28,7 @@ void main() {
   document.body.append(renderer.view);
   
   // LOL, only works on startup, subsequent resizes will look shit
-  int tileDimension = min( window.innerWidth ~/ 10, window.innerHeight ~/ 9);
+  int tileDimension = min( window.innerWidth ~/ 9, window.innerHeight ~/ 9);
   
   Tweening.Tween.registerAccessor(PIXI.Sprite, new DisplayObjectAccessor());  
   Tweening.Tween.registerAccessor(PIXI.CanvasText, new DisplayObjectAccessor());  
