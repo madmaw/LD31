@@ -36,6 +36,7 @@ part 'state/level/tile_type.dart';
 part 'state/level/tile_match.dart';
 part 'state/level/render/display_object_render.dart';
 part 'state/level/render/player_render.dart';
+part 'state/level/render/pulsating_render.dart';
 part 'state/level/delta/move_delta.dart';
 part 'state/level/delta/gain_gold_delta.dart';
 part 'state/level/delta/multiplier_delta.dart';

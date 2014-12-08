@@ -22,13 +22,20 @@ class LevelStateFactory extends StateFactory<Game> {
       
       double top = (sqrt(movesTaken + 25.0) + game.depth);
       double bottom = sqrt(game.depth + 36.0);
-      print("$top vs $bottom");
+      //print("$top vs $bottom");
       
-      bool enemy = this._random.nextDouble() * top > bottom;
+      bool enemy = this._random.nextDouble() * top > bottom && this._random.nextInt(game.depth + 3) > 3;
       EntityType entityType;
       if( enemy ) {
-        entityType = EntityType.SNAKE;
-        
+        if( this._random.nextInt(game.depth + 1) > 2 && this._random.nextDouble() > 0.5  ) {
+          entityType = EntityType.SPIKE_BLOCK;          
+        } else {
+          if( this._random.nextBool() && game.depth > 6 ) {
+            entityType = EntityType.SPIDER;
+          } else {
+            entityType = EntityType.SNAKE;            
+          }
+        }
       } else {
         int type = this._random.nextInt(13);
         entityType = EntityType.DIRT;
@@ -69,7 +76,8 @@ class LevelStateFactory extends StateFactory<Game> {
         tileRenderFactory, 
         entityRenderFactory,
         menuStateFactory,
-        this 
+        this, 
+        tweenManager
       );
     entityRenderFactory.grappleCallback = levelState.grappleCallback;
     return levelState;

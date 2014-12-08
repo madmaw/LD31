@@ -23,7 +23,8 @@ class MenuStateFactory extends StateFactory<Game> {
         this._gameStateFactory,
         playButtonUp, 
         playButtonHover, 
-        playButtonDown
+        playButtonDown,
+        parameter
     );
   }
   

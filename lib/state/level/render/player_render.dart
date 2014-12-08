@@ -117,12 +117,14 @@ class PlayerRender extends DisplayObjectRender {
   
   detach(PIXI.Stage stage) {
     super.detach(stage);
+    /* leave on screen even after death
     stage.children.remove(this.goldText);
     stage.children.remove(this.goldSprite);
     stage.children.remove(this.heartText);
     stage.children.remove(this.heartSprite);
     stage.children.remove(this.grappleText);
     stage.children.remove(this.grappleSprite);
+     */
   }
   
   apply(Delta delta, DeltaRenderCompletionCallback onComplete) {
@@ -130,30 +132,36 @@ class PlayerRender extends DisplayObjectRender {
     if( delta is GainGoldDelta ) {
       GainGoldDelta gainGoldDelta = delta;
       int quantity = gainGoldDelta.quantity;
-      int quantityHeight = tileDimension~/2;
-      PIXI.CanvasText extra = new PIXI.CanvasText("${quantity}", new PIXI.TextStyle(
-          font: "${quantityHeight}px Courier",
-          fill: new PIXI.Colour.fromHtml("#FFFF00")
-      ));
-      extra.position = new Point(delta.fromTile.x * this.tileDimension, delta.fromTile.y * this.tileDimension);
-      this.stage.children.add(extra);
-      // tween to gold position
-      Tweening.Tween tween = new Tweening.Tween.to(extra, TweenType.Position, 0.7);
-      tween.targetValues = [width/2, height - this.tileDimension];    
-      tween.easing = Tweening.Cubic.IN;
-      tween.callback = (int type, Tweening.BaseTween source) {
-        if( type == Tweening.TweenCallback.COMPLETE ) {
-          this.gold += delta.quantity;
-          this.goldText.setText("${gold}");
-          this.stage.children.remove(extra);
-          onComplete(false);
-        }
-      };
-      tweenManager.add(tween);
-      
-      int id = random.nextInt(2) + 1;
-      AudioElement audio = document.querySelector("#gold$id").clone(true);
-      audio.play();
+      if( quantity > 0 ) {
+        int quantityHeight = tileDimension~/2;
+        PIXI.CanvasText extra = new PIXI.CanvasText("${quantity}", new PIXI.TextStyle(
+            font: "${quantityHeight}px Courier",
+            fill: new PIXI.Colour.fromHtml("#FFFF00")
+        ));
+        extra.position = new Point(delta.fromTile.x * this.tileDimension, delta.fromTile.y * this.tileDimension);
+        this.stage.children.add(extra);
+        // tween to gold position
+        Tweening.Tween tween = new Tweening.Tween.to(extra, TweenType.Position, 0.7);
+        tween.targetValues = [width/2, height - this.tileDimension];    
+        tween.easing = Tweening.Cubic.IN;
+        tween.callback = (int type, Tweening.BaseTween source) {
+          if( type == Tweening.TweenCallback.COMPLETE ) {
+            this.gold += delta.quantity;
+            this.goldText.setText("${gold}");
+            this.stage.children.remove(extra);
+            onComplete(false);
+          }
+        };
+        tweenManager.add(tween);
+        
+        int id = random.nextInt(2) + 1;
+        AudioElement audio = document.querySelector("#gold$id").clone(true);
+        audio.play();
+      } else {
+        AudioElement audio = document.querySelector("#nogold1").clone(true);
+        audio.play();        
+        onComplete(false);
+      }
       
     } else if( delta is MultiplierDelta ) {
       MultiplierDelta multiplierDelta = delta;
@@ -229,6 +237,8 @@ class PlayerRender extends DisplayObjectRender {
       this.grapples++;
       this.grappleText.setText("$grapples");
       onComplete(false);
+      AudioElement audio = document.querySelector("#grapple1").clone(true);
+      audio.play();
     } else if( delta.type == DeltaType.LEAVE ) {
       Tweening.Tween exit = new Tweening.Tween.to(this._displayObject, TweenType.Alpha, 2);
       exit.targetValues = [0];

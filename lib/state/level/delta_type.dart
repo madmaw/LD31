@@ -17,6 +17,7 @@ class DeltaType {
   static const DIE_COLLECTED = const DeltaType._(12);
   static const REVEAL = const DeltaType._(13);
   static const LEAVE = const DeltaType._(14);
+  static const MOVE_SLIDE = const DeltaType._(15);
   
   final int value;
   

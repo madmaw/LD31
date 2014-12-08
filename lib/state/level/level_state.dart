@@ -23,6 +23,8 @@ class LevelState extends State {
   
   bool busy;
   
+  Tweening.TweenManager _tweenManager;
+  
   LevelState(
       this._random, 
       this._game, 
@@ -31,8 +33,8 @@ class LevelState extends State {
       this._tileRenderFactory, 
       this._entityRenderFactory,
       this._menuStateFactory,
-      this._nextLevelStateFactory
-      
+      this._nextLevelStateFactory,
+      this._tweenManager
   ): super() {
     grappleCallback = () {
       DeltaBlock deltaBlock = this._level.grapple();
@@ -57,7 +59,26 @@ class LevelState extends State {
     this.busy = false;
     this.redraw();
     
+    // show the current level
+    int level = this._game.depth + 1;
+    PIXI.CanvasText introText = new PIXI.CanvasText("LEVEL $level", new PIXI.TextStyle(
+        fill: new PIXI.Colour.fromHtml("#FFFFFF"),
+        font: "bold ${_tileDimension}px Courier"        
+      )
+    );
+    introText.position = new Point((this._renderer.view.width - introText.width)/2, (this._renderer.view.height - introText.height)/2);
+    this._stage.children.add(introText);
     
+    Tweening.Tween tween = new Tweening.Tween.to(introText, TweenType.Alpha, 1.0);
+    tween.delay = 2;
+    tween.targetValues = [0.0];
+    
+    tween.callback = (int type, Tweening.BaseTween source) {
+      if( type == Tweening.TweenCallback.COMPLETE ) {
+        this._stage.children.remove(introText);
+      }      
+    };
+    this._tweenManager.add(tween);
   }
   
   void addListeners() {

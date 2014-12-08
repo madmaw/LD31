@@ -15,6 +15,8 @@ class HardCodedEntityRenderFactory extends RenderFactory<Entity> {
   static final PathGold = "images/gold.png";
   static final PathDiamond = "images/diamond.png";
   static final PathRuby = "images/ruby.png";
+  static final PathSpikes = "images/spikes.png";
+  static final PathSpider = "images/spider.png";
   
 
   static List<String> getAssetPaths() {
@@ -31,7 +33,9 @@ class HardCodedEntityRenderFactory extends RenderFactory<Entity> {
             PathCrate,
             PathGold,
             PathDiamond,
-            PathRuby
+            PathRuby,
+            PathSpikes,
+            PathSpider
     ];
   }
   
@@ -67,6 +71,10 @@ class HardCodedEntityRenderFactory extends RenderFactory<Entity> {
       sprite = new PIXI.Sprite.fromImage(PathDiamond);
     } else if( object.type == EntityType.RUBY ) {
       sprite = new PIXI.Sprite.fromImage(PathRuby);
+    } else if( object.type == EntityType.SPIKE_BLOCK ) {
+      sprite = new PIXI.Sprite.fromImage(PathSpikes);
+    } else if( object.type == EntityType.SPIDER ) {
+      sprite = new PIXI.Sprite.fromImage(PathSpider);
     } else {
       sprite = new PIXI.Sprite.fromImage(PathDirtBlock);
     }
@@ -101,6 +109,8 @@ class HardCodedEntityRenderFactory extends RenderFactory<Entity> {
           grappleCallback, 
           random
       );
+    } else if( object.type == EntityType.SNAKE || object.type == EntityType.SPIDER ) {
+      return new PulsatingRender(sprite, this.tileDimension, this.tweenManager);
     } else {
       return new DisplayObjectRender(sprite, this.tileDimension, this.tweenManager);
     }

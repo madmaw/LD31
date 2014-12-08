@@ -8,12 +8,14 @@ class MenuState extends State {
   PIXI.Texture _playButtonUpTexture;
   PIXI.Texture _playButtonHoverTexture;
   PIXI.Texture _playButtonDownTexture;
+  Game _previousGame;
   
   MenuState(
       this._levelStateFactory,
       this._playButtonUpTexture,
       this._playButtonHoverTexture,
-      this._playButtonDownTexture
+      this._playButtonDownTexture, 
+      this._previousGame
   ) : super() {
     
   }
@@ -41,6 +43,34 @@ class MenuState extends State {
         (this._renderer.view.height)/2 - (playButton.height)/2
     ); 
     this._stage.children.add(playButton);
+
+    String highScoreString = window.localStorage['high_score'];
+    int highScore;
+    if( highScoreString != null ) {
+      highScore = int.parse(highScoreString);
+    }
+    String scoreFont = "bold ${this._playButtonUpTexture.height/4}px Courier";
+    if( this._previousGame != null ) {
+      int previousScore = this._previousGame.players[0].gold;
+      if( highScore == null || highScore < previousScore ) {
+        highScore = previousScore;
+        window.localStorage['high_score'] = "$highScore";
+      }
+      PIXI.CanvasText previousScoreText = new PIXI.CanvasText("PREV $previousScore", new PIXI.TextStyle(
+          fill: new PIXI.Colour.fromHtml("#FFFF00"),
+          font: scoreFont
+      ));       
+      previousScoreText.position = new Point((this._renderer.view.width - previousScoreText.width)/2, this._renderer.view.height - previousScoreText.height * 2);
+      this._stage.children.add(previousScoreText);
+    }
+    if( highScore != null ) {
+      PIXI.CanvasText highScoreText = new PIXI.CanvasText("HIGH $highScore", new PIXI.TextStyle(
+          fill: new PIXI.Colour.fromHtml("#FFFF00"),
+          font: scoreFont
+      ));       
+      highScoreText.position = new Point((this._renderer.view.width - highScoreText.width)/2, highScoreText.height);
+      this._stage.children.add(highScoreText);
+    }
 
     this.render();
     

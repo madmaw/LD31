@@ -19,6 +19,7 @@ class DisplayObjectRender extends Render {
     this.stage = stage;
     this.width = width;
     this.height = height;
+    
   }
   
   detach(PIXI.Stage stage) {
@@ -58,6 +59,18 @@ class DisplayObjectRender extends Render {
       };
       
       tweenManager.add(timeline);
+      
+      if( moveDelta.type == DeltaType.MOVE_CLIMB ) {
+        AudioElement audio = document.querySelector("#climb1").clone(true);
+        audio.play();
+      } else if( moveDelta.type == DeltaType.MOVE_SLIDE ) {
+        AudioElement audio = document.querySelector("#slide1").clone(true);
+        audio.play();        
+      } else if( moveDelta.type == DeltaType.MOVE_GRAPPLE ) {
+        AudioElement audio = document.querySelector("#grapple1").clone(true);
+        audio.play();                
+      }
+      
     } else if( delta.type == DeltaType.DIE_CRUSHED || delta.type == DeltaType.DIE_MATCHED || delta.type == DeltaType.DIE_COLLECTED) {
 
       Tweening.Tween tween1 = new Tweening.Tween.to(this._displayObject, TweenType.Alpha, 0.5);
@@ -79,6 +92,10 @@ class DisplayObjectRender extends Render {
           onComplete(true);
         }
       };      
+      if( delta.type == DeltaType.DIE_CRUSHED ) {
+          AudioElement audio = document.querySelector("#squashed1").clone(true);
+          audio.play();                
+        }
     } else if( delta.type == DeltaType.REVEAL ) {
       Tweening.Timeline timeline = new Tweening.Timeline.sequence();
       

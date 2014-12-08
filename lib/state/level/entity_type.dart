@@ -12,6 +12,8 @@ class EntityType {
   static const CRATE = const EntityType._(8, 0.0);
   static const DIAMOND = const EntityType._(9, 10.0);
   static const RUBY = const EntityType._(10, 20.0);
+  static const SPIKE_BLOCK = const EntityType._(11, 5.0);
+  static const SPIDER = const EntityType._(12, 0.0);
   
   final int value;
   final double monetaryValue;

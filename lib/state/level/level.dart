@@ -102,7 +102,14 @@ class Level {
           // check vertical movement
           // cascade changes (matches and gravity)
           // is there a ladder above?
-          DeltaBlock consequences = climbOrFall(0, false);
+          
+          DeltaBlock consequences = applyMatches(0, playerEntity, false);
+          DeltaBlock climb = climbOrFall(0, false);
+          if( consequences != null ) {
+            consequences.appendDependantBlock(climb);
+          } else {
+            consequences = climb;
+          }
           player.grapples --;
           return new DeltaBlock(deltas, consequences);
           
@@ -150,6 +157,17 @@ class Level {
         playerTile.entity = null;
         int amount = targetEntity.type.monetaryValue.toInt();
         player.gold += amount;
+        // TOOD centralise this
+        String highScoreString = window.localStorage['high_score'];
+        int highScore;
+        if( highScoreString != null ) {
+          highScore = int.parse(highScoreString);
+          if( highScore < player.gold ) {
+            int gold = player.gold;
+            window.localStorage['high_score'] = "$gold";              
+          }
+        }
+        
         Delta goldDelta = new GainGoldDelta(DeltaType.GAIN_GOLD, playerEntity, to, amount, 1);
         deltas.add(goldDelta);
         Delta targetDelta = new Delta(DeltaType.DIE_COLLECTED, targetEntity, to);
@@ -161,7 +179,7 @@ class Level {
           Delta targetDelta = new MoveDelta(DeltaType.MOVE_SWAP, targetEntity, to, from);
           deltas.insert(0, targetDelta);
           // did we swap with a snake?
-          if( targetEntity.type == EntityType.SNAKE ) {
+          if( targetEntity.type == EntityType.SNAKE || targetEntity.type == EntityType.SPIDER ) {
             // bring the pain
             player.health--;
             deltas.add(new Delta(DeltaType.TAKE_DAMAGE, playerEntity, to));
@@ -202,68 +220,71 @@ class Level {
   DeltaBlock climbOrFall(int multiplier, bool forceGravity) {
     Player player = this._game.players[this._currentPlayerIndex];
     Entity playerEntity = this._playerEntities[player];
-    Tile playerTile = playerEntity.tile;
-    int x = playerTile.x;
-    int y = playerTile.y;
-    
-    bool done = false;
-    int currentRow = y;
     DeltaBlock result = null;
-    while( !done ) {
-      bool wentUp = false;
-      DeltaBlock next;
-      if( currentRow > 0 ) {
-        Tile tileAbove = this._tiles[x][currentRow -1];
-        if( tileAbove.entity != null && tileAbove.entity.type == EntityType.LADDER ) {
-          Entity ladderEntity = tileAbove.entity;
-          // move up
-          Point climbTo = new Point(x, currentRow-1);
-          Point climbFrom = new Point(x, currentRow);
-          Delta playerClimbDelta = new MoveDelta(DeltaType.MOVE_CLIMB, playerEntity, climbFrom, climbTo);
-          Delta ladderDelta = new MoveDelta(DeltaType.MOVE_SWAP, ladderEntity, climbTo, climbFrom);
-          
-          tileAbove.entity = playerEntity;
-          playerTile.entity = ladderEntity;
-          playerTile = tileAbove;
-          
-          next = new DeltaBlock([ladderDelta, playerClimbDelta], null);
-          currentRow--;
-          wentUp = true;
-        }
-      }
-      bool wentDown = false;
-      if( !wentUp ) {
-        // can we go down?
-        if( currentRow < this.tilesDown - 1) {
-          Tile tileBelow = this._tiles[x][currentRow + 1];
-          if( tileBelow.entity != null && tileBelow.entity.type == EntityType.SNAKE ) {
-            Entity snakeEntity = tileBelow.entity;
-            // move down
-            Point climbTo = new Point(x, currentRow+1);
+    if( player.health > 0 && !player.dead ) {
+      Tile playerTile = playerEntity.tile;
+      int x = playerTile.x;
+      int y = playerTile.y;
+      
+      bool done = false;
+      int currentRow = y;
+      while( !done ) {
+        bool wentUp = false;
+        DeltaBlock next;
+        if( currentRow > 0 ) {
+          Tile tileAbove = this._tiles[x][currentRow -1];
+          if( tileAbove.entity != null && tileAbove.entity.type == EntityType.LADDER ) {
+            Entity ladderEntity = tileAbove.entity;
+            // move up
+            Point climbTo = new Point(x, currentRow-1);
             Point climbFrom = new Point(x, currentRow);
             Delta playerClimbDelta = new MoveDelta(DeltaType.MOVE_CLIMB, playerEntity, climbFrom, climbTo);
-            Delta snakeDelta = new MoveDelta(DeltaType.MOVE_SWAP, snakeEntity, climbTo, climbFrom);
+            Delta ladderDelta = new MoveDelta(DeltaType.MOVE_SWAP, ladderEntity, climbTo, climbFrom);
             
-            tileBelow.entity = playerEntity;
-            playerTile.entity = snakeEntity;
-            playerTile = tileBelow;
+            tileAbove.entity = playerEntity;
+            playerTile.entity = ladderEntity;
+            playerTile = tileAbove;
             
-            next = new DeltaBlock([snakeDelta, playerClimbDelta], null);
-            currentRow++;
-            wentDown = true;
+            next = new DeltaBlock([ladderDelta, playerClimbDelta], null);
+            currentRow--;
+            wentUp = true;
+          }
+        }
+        bool wentDown = false;
+        if( !wentUp ) {
+          // can we go down?
+          if( currentRow < this.tilesDown - 1) {
+            Tile tileBelow = this._tiles[x][currentRow + 1];
+            if( tileBelow.entity != null && tileBelow.entity.type == EntityType.SNAKE ) {
+              Entity snakeEntity = tileBelow.entity;
+              // move down
+              Point climbTo = new Point(x, currentRow+1);
+              Point climbFrom = new Point(x, currentRow);
+              Delta playerClimbDelta = new MoveDelta(DeltaType.MOVE_SLIDE, playerEntity, climbFrom, climbTo);
+              Delta snakeDelta = new MoveDelta(DeltaType.MOVE_SWAP, snakeEntity, climbTo, climbFrom);
+              
+              tileBelow.entity = playerEntity;
+              playerTile.entity = snakeEntity;
+              playerTile = tileBelow;
+              
+              next = new DeltaBlock([snakeDelta, playerClimbDelta], null);
+              currentRow++;
+              wentDown = true;
+            }
+          }
+        }
+        if( !wentDown && !wentUp ) {
+          done = true;
+        }
+        if( next != null ) {
+          if( result == null ) {
+            result = next;
+          } else {
+            result.appendDependantBlock(next);
           }
         }
       }
-      if( !wentDown && !wentUp ) {
-        done = true;
-      }
-      if( next != null ) {
-        if( result == null ) {
-          result = next;
-        } else {
-          result.appendDependantBlock(next);
-        }
-      }
+      
     }
 
     var matches = applyMatches(multiplier, playerEntity, forceGravity);
@@ -372,8 +393,18 @@ class Level {
           x += match.length ~/ 2;
         }
         Point position = new Point(x, y);
-        if( quantity > 0 ) {
+        if( playerEntity.player.health > 0 && !playerEntity.player.dead ) {
           deltas.add(new GainGoldDelta(DeltaType.GAIN_GOLD, playerEntity, position, quantity, multiplier));
+          // save the high score
+          String highScoreString = window.localStorage['high_score'];
+          int highScore;
+          if( highScoreString != null ) {
+            highScore = int.parse(highScoreString);
+            if( highScore < playerEntity.player.gold ) {
+              int gold = playerEntity.player.gold;
+              window.localStorage['high_score'] = "$gold";              
+            }
+          }
           
         }
         // we..might want to spawn something here
@@ -382,12 +413,14 @@ class Level {
           bonusType = EntityType.DIAMOND;
         } else if( match.entityType == EntityType.CRATE ) {
           bonusType = EntityType.GRAPPLE;
-        } else if( match.entityType == EntityType.SNAKE ) {
+        } else if( match.entityType == EntityType.SNAKE || match.entityType == EntityType.SPIDER ) {
           bonusType = EntityType.RUBY;
         }
         if( bonusType != null && this._tiles[position.x][position.y].entity == null ) {
           double probability = match.length / 5;
-          probability = probability * probability;
+          if( match.entityType != EntityType.CRATE ) {
+            probability = probability * probability;            
+          }
           if( this._random.nextDouble() < probability ) {
             // need a delta for this
             Entity bonusEntity = new Entity(bonusType);
@@ -401,7 +434,7 @@ class Level {
     });
     if( playerEntity != null && multiplier != null ) {
       playerEntity.player.gold += addedValue;      
-      if( multiplier > 1 && addedValue > 0 ) {
+      if( multiplier > 1 && addedValue > 0 && playerEntity.player.health > 0 && !playerEntity.player.dead ) {
         deltas.add(new MultiplierDelta(DeltaType.MULTIPLIER, playerEntity, multiplier));        
       }
     }
@@ -414,19 +447,49 @@ class Level {
   }
   
   DeltaBlock applyGravity(int multiplier, PlayerEntity playerEntity) {
+    List<Delta> deathDeltas = [];
     List<Delta> deltas = [];
     for( int x=0; x<this.tilesAcross; x++ ) {
       int missingBlockCount = 0;
+      int squishyBlockCount = 0;
       for( int y=this.tilesDown; y>0; ) {
         y--;
         Tile tile = this._tiles[x][y];
         if( tile.entity == null ) {
           missingBlockCount++;
-        } else if( missingBlockCount > 0 ) {
-          Tile toTile = this._tiles[x][y+missingBlockCount];
-          deltas.add(new MoveDelta(DeltaType.MOVE_FALL, tile.entity, new Point(x, y), new Point(x, y + missingBlockCount)));
-          toTile.entity = tile.entity;
-          tile.entity = null;
+        } else {
+          
+          if( multiplier != null && ( tile.entity.type == EntityType.PLAYER || tile.entity.type == EntityType.SNAKE || tile.entity.type == EntityType.SPIDER ) ) {
+            squishyBlockCount++;
+          } else {
+            if( missingBlockCount > 0 ) {
+              if( tile.entity.type == EntityType.SPIKE_BLOCK ) {
+                missingBlockCount += squishyBlockCount;
+              }
+            }
+            squishyBlockCount = 0;              
+          }
+          
+          if( missingBlockCount > 0 ) {
+            // kill anything in the way (start at 1, ignore ourselves)
+            for( int i=1; i<=missingBlockCount; i++ ) {
+              Tile intermediateTile = this._tiles[x][y+i];
+              if( intermediateTile.entity != null ) {
+                deathDeltas.add(new Delta(DeltaType.DIE_CRUSHED, intermediateTile.entity, new Point(x, y+i+1)));
+                // set the player's health to zero
+                if( intermediateTile.entity is PlayerEntity ) {
+                  PlayerEntity playerEntity = intermediateTile.entity;
+                  playerEntity.player.health = 0;
+                  playerEntity.player.dead = true;
+                }
+                intermediateTile.entity = null;
+              }
+            }
+            Tile toTile = this._tiles[x][y+missingBlockCount];
+            deltas.add(new MoveDelta(DeltaType.MOVE_FALL, tile.entity, new Point(x, y), new Point(x, y + missingBlockCount)));
+            toTile.entity = tile.entity;
+            tile.entity = null;
+          }
         }
       }
       // add in the missing blocks
@@ -439,12 +502,18 @@ class Level {
         var entity = this._entityFactory(this._movesTaken, x, i);
         deltas.add(new MoveDelta(DeltaType.MOVE_FALL, entity, new Point(x, i-missingBlockCount), new Point(x, i)));
         toTile.entity = entity;
+        // do not squash on initial fall? makes things easier/safer
       }
     }
     if( deltas.length > 0 ) {
-      //DeltaBlock matches = applyMatches(multiplier, playerEntity);
       DeltaBlock matches = climbOrFall(multiplier, false);
-      return new DeltaBlock(deltas, matches);    
+      if( deathDeltas.length > 0 ) {
+        return new DeltaBlock(deltas, new DeltaBlock(deathDeltas, matches));
+      } else {
+        return new DeltaBlock(deltas, matches);            
+      }
+      //DeltaBlock matches = applyMatches(multiplier, playerEntity);
+      
     } else {
       return null;
     }
